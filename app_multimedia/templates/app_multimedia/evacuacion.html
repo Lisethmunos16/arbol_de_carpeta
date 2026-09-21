@@ -1,0 +1,372 @@
+{% load static %}
+<!doctype html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Evacuación CodeRider</title>
+
+    <link rel="icon" href="{% static 'recursos/imagenes/sistemas/favicon.ico' %}" />
+    <link rel="manifest" href="{% static 'recursos/pwa/manifest.json' %}" />
+    <link rel="stylesheet" href="{% static 'recursos/estilos/estilo.css' %}" />
+
+    <!-- Leaflet CSS -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <!-- Leaflet Routing Machine CSS -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet-routing-machine@3.2.12/dist/leaflet-routing-machine.css" />
+
+    <style>
+        #mapa {
+            height: 500px !important;
+            width: 100% !important;
+            border-radius: 8px;
+            margin-top: 10px;
+            background-color: #e5e3df;
+            position: relative;
+            z-index: 1;
+        }
+        .reporte-item {
+            padding: 10px;
+            margin-bottom: 8px;
+            background: #f8f9fa;
+            border-left: 4px solid #e67e22;
+            border-radius: 4px;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+        .reporte-item:hover {
+            background: #eef2f5;
+        }
+        /* Ocultar marca de agua de Leaflet */
+        .leaflet-control-attribution {
+            display: none !important;
+        }
+    </style>
+</head>
+
+<body>
+
+    <nav class="navbar">
+        <div class="nav-contenedor">
+            <a href="{% url 'evacuacion_coderider' %}" class="nav-logo">CodeRider</a>
+            <ul class="nav-menu">
+                <li><a href="{% url 'evacuacion_coderider' %}" class="nav-enlace activo">📍 Generalidades codeRider</a></li>
+                <li><a href="{% url 'panel_coderider' %}" class="nav-enlace">📊 Panel CodeRider</a></li>
+            </ul>
+        </div>
+    </nav>
+
+    <header>
+        <h1>coderider aplicación</h1>
+    </header>
+
+    <main>
+
+        <section class="tarjeta">
+            <h2>🖼️ Imágenes</h2>
+            <img src="{% static 'recursos/imagenes/fotos/plano.png' %}" width="250" />
+            <img src="{% static 'recursos/imagenes/iconos/salida.svg' %}" width="60" />
+        </section>
+
+        <section class="tarjeta">
+            <h2>🎬 Video coderider</h2>
+            <video width="100%" controls>
+                <source src="{% static 'recursos/videos/clips/simulacro.mp4' %}" />
+                <track src="{% static 'recursos/videos/subtitulos/subtitulos.vtt' %}" kind="subtitles" srclang="es" />
+            </video>
+        </section>
+
+        <!-- SECCIÓN AUDIOS CORREGIDA -->
+        <section class="tarjeta">
+            <h2>🔊 Audio coderider 1</h2>
+            <audio controls preload="auto">
+                <source src="{% static 'recursos/audios/alertas/Alerta (Sonido).mp3' %}" type="audio/mpeg" />
+                <source src="{% static 'recursos/audios/alertas/alerta.mp3' %}" type="audio/mpeg" />
+                Tu navegador no soporta la reproducción de audio.
+            </audio>
+
+            <h2>🔊 Audio coderider 2</h2>
+            <audio controls preload="auto">
+                <source src="{% static 'recursos/audios/alertas/ayuda.mp3' %}" type="audio/mpeg" />
+                Tu navegador no soporta la reproducción de audio.
+            </audio>
+
+            <h2>🧘 Audio de relajación</h2>
+            <audio controls preload="auto">
+                <source src="{% static 'recursos/audios/alertas/yoga.mp3' %}" type="audio/mpeg" />
+                Tu navegador no soporta la reproducción de audio.
+            </audio>
+        </section>
+
+        <section class="tarjeta">
+            <h2>📁 Documentos y datos coderider</h2>
+            <a href="{% static 'recursos/documentos/pdf/plan_evacuacion.pdf' %}" target="_blank">📄 PDF coderider</a>
+            <a href="{% static 'recursos/documentos/comprimidos/kit_emergencia.zip' %}" download>🗃️ ZIP coderider</a>
+            <a href="{% static 'recursos/datos/tablas/extintores.csv' %}" download>📊 CSV coderider</a>
+            <a href="{% static 'recursos/datos/gps/ruta_evacuacion.gpx' %}" download>📍 GPS coderider</a>
+        </section>
+
+        <!-- Sección Mapa interactivo con ruta -->
+        <section class="tarjeta">
+            <h2>🗺️ Mapa de Sismos y Navegación de Ruta</h2>
+            <p>💡 <em>Selecciona un sismo en el mapa o en la lista para trazar la ruta de navegación desde tu ubicación.</em></p>
+            <div id="mapa"></div>
+        </section>
+
+        <!-- Sección Filtrar Sismos -->
+        <section class="tarjeta">
+            <h2>🌋 Sismos Recientes y Filtro</h2>
+            <form id="form-filtro-sismos" onsubmit="return false;" class="formulario-filtro">
+                <div class="campo" style="margin-bottom: 10px;">
+                    <label for="filtro-lugar" style="display: block; font-weight: bold;">Buscar por lugar / país / región:</label>
+                    <input type="text" id="filtro-lugar" placeholder="Ej: Colombia, Chile, Mexico, Japan..." style="width: 100%; padding: 8px;" />
+                </div>
+
+                <div class="campo-grupo" style="display: flex; gap: 10px; margin-bottom: 10px;">
+                    <div class="campo" style="flex: 1;">
+                        <label for="filtro-mag-min" style="display: block; font-weight: bold;">Magnitud Mínima:</label>
+                        <input type="number" id="filtro-mag-min" step="0.1" min="0" placeholder="Ej: 2.5" style="width: 100%; padding: 8px;" />
+                    </div>
+                    <div class="campo" style="flex: 1;">
+                        <label for="filtro-mag-max" style="display: block; font-weight: bold;">Magnitud Máxima:</label>
+                        <input type="number" id="filtro-mag-max" step="0.1" min="0" placeholder="Ej: 8.0" style="width: 100%; padding: 8px;" />
+                    </div>
+                </div>
+
+                <div class="botonera">
+                    <button type="button" id="btn-filtrar-sismos" class="btn-mapa btn-azul">
+                        🔍 Filtrar Sismos
+                    </button>
+                    <button type="button" id="btn-limpiar-filtro" class="btn-mapa">
+                        🔄 Mostrar Todos
+                    </button>
+                </div>
+            </form>
+
+            <p id="resumen-sismos" style="margin-top: 15px; font-weight: bold;"></p>
+            <div id="lista-sismos" style="max-height: 350px; overflow-y: auto; margin-top: 10px;"></div>
+        </section>
+
+        <section class="tarjeta">
+            <h2>📷 Subir archivos coderider</h2>
+            <form method="post" enctype="multipart/form-data">
+                {% csrf_token %}
+                {{ form.as_p }}
+                <button type="submit">Enviar reporte</button>
+            </form>
+        </section>
+
+        <section class="tarjeta">
+            <h2>📝 Reportes recibidos coderider</h2>
+            {% for r in reportes %}
+            <div class="reporte">
+                {% if r.foto %}
+                <img src="{{ r.foto.url }}" width="150" />
+                {% endif %}
+
+                {% if r.video %}
+                <video width="250" controls>
+                    <source src="{{ r.video.url }}" />
+                    Tu navegador no soporta reproducción de video.
+                </video>
+                {% endif %}
+
+                <p><strong>{{ r.nombre }}</strong>: {{ r.descripcion }}</p>
+                <p>📅 {{ r.fecha|date:"d/m/Y H:i" }}</p>
+
+                {% if r.documento %}
+                <p><a href="{{ r.documento.url }}" target="_blank">📄 Ver documento</a></p>
+                {% endif %}
+
+                {% if r.audio %}
+                <audio controls>
+                    <source src="{{ r.audio.url }}" />
+                    Tu navegador no soporta reproducción de audio.
+                </audio>
+                {% endif %}
+            </div>
+            {% empty %}
+            <p>Aún no hay reportes.</p>
+            {% endfor %}
+        </section>
+
+    </main>
+
+    <!-- Variables globales Django -->
+    <script>
+        const CSRF_TOKEN = '{{ csrf_token }}';
+        const URL_CSV = "{% static 'recursos/datos/tablas/extintores.csv' %}";
+        const URL_GEO = "{% static 'recursos/datos/geo/ruta.geojson' %}";
+        const URL_JSON = "{% static 'recursos/datos/json/puntos_encuentro.json' %}";
+    </script>
+
+    <!-- Scripts de Leaflet y Routing Machine -->
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <script src="https://unpkg.com/leaflet-routing-machine@3.2.12/dist/leaflet-routing-machine.js"></script>
+
+    <!-- Código del Mapa y Generador de Rutas -->
+    <script>
+        document.addEventListener("DOMContentLoaded", () => {
+            const contenedorMapa = document.getElementById("mapa");
+            if (!contenedorMapa) return;
+
+            // Inicializar mapa centrado en Popayán sin control de atribución
+            window.mapa = L.map("mapa", { attributionControl: false }).setView([2.4419, -76.6063], 6);
+
+            L.tileLayer("https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png", {
+                maxZoom: 19,
+                attribution: '© OpenStreetMap, © CartoDB'
+            }).addTo(window.mapa);
+
+            setTimeout(() => { 
+                if (window.mapa) window.mapa.invalidateSize(); 
+            }, 400);
+
+            const capaSismosGroup = L.layerGroup().addTo(window.mapa);
+            let sismosGlobales = [];
+            let marcadorUsuario = null;
+            let controlRuta = null;
+            let ubicacionUsuario = [2.4419, -76.6063];
+
+            // Geolocalización del usuario
+            if (navigator.geolocation) {
+                navigator.geolocation.getCurrentPosition(
+                    (pos) => {
+                        ubicacionUsuario = [pos.coords.latitude, pos.coords.longitude];
+                        if (marcadorUsuario) window.mapa.removeLayer(marcadorUsuario);
+                        marcadorUsuario = L.marker(ubicacionUsuario)
+                            .addTo(window.mapa)
+                            .bindPopup("<b>📍 Tu Ubicación Actual</b>");
+                    },
+                    (err) => console.log("Usando ubicación prediseñada.")
+                );
+            }
+
+            // Función global accesible para trazar rutas
+            window.trazarRuta = function(latDestino, lonDestino) {
+                if (controlRuta) {
+                    window.mapa.removeControl(controlRuta);
+                }
+
+                controlRuta = L.Routing.control({
+                    waypoints: [
+                        L.latLng(ubicacionUsuario[0], ubicacionUsuario[1]),
+                        L.latLng(latDestino, lonDestino)
+                    ],
+                    routeWhileDragging: false,
+                    show: true,
+                    language: 'es',
+                    createMarker: function() { return null; } // Evita duplicar iconos
+                }).addTo(window.mapa);
+
+                window.mapa.setView([latDestino, lonDestino], 8);
+            };
+
+            // Fetch sismos desde la API
+            fetch("https://earthquake.usgs.gov/earthquakes/feed/v1.0/summary/2.5_week.geojson")
+                .then(res => res.json())
+                .then(data => {
+                    sismosGlobales = data.features || [];
+                    const resumen = document.getElementById("resumen-sismos");
+                    if (resumen) resumen.textContent = `Se cargaron ${sismosGlobales.length} sismos recientes.`;
+                    renderizar(sismosGlobales);
+                })
+                .catch(err => {
+                    console.error("Error sismos:", err);
+                    const resumen = document.getElementById("resumen-sismos");
+                    if (resumen) resumen.textContent = "Error al conectar con el servicio de sismos.";
+                });
+
+            function renderizar(lista) {
+                const contenedorLista = document.getElementById("lista-sismos");
+                if (contenedorLista) contenedorLista.innerHTML = "";
+                capaSismosGroup.clearLayers();
+
+                if (lista.length === 0) {
+                    if (contenedorLista) contenedorLista.innerHTML = "<p>No se encontraron sismos.</p>";
+                    return;
+                }
+
+                lista.forEach((sismo) => {
+                    const lugar = sismo.properties.place || "Ubicación desconocida";
+                    const mag = sismo.properties.mag || 0;
+                    const lon = sismo.geometry.coordinates[0];
+                    const lat = sismo.geometry.coordinates[1];
+                    const prof = sismo.geometry.coordinates[2];
+
+                    const circle = L.circleMarker([lat, lon], {
+                        radius: Math.max(mag * 3, 4),
+                        fillColor: mag >= 5 ? '#e74c3c' : '#e67e22',
+                        color: '#000',
+                        weight: 1,
+                        fillOpacity: 0.8
+                    });
+
+                    const popupHTML = `
+                        <b>📍 ${lugar}</b><br>
+                        <b>Magnitud:</b> M ${mag}<br>
+                        <b>Profundidad:</b> ${prof} km<br><br>
+                        <button onclick="window.trazarRuta(${lat}, ${lon})" style="background:#27ae60; color:white; border:none; padding:6px 10px; border-radius:4px; cursor:pointer;">
+                            🚗 Trazar Ruta de Navegación
+                        </button>
+                    `;
+
+                    circle.bindPopup(popupHTML);
+                    capaSismosGroup.addLayer(circle);
+
+                    // Renderizar lista interactiva
+                    if (contenedorLista) {
+                        const div = document.createElement("div");
+                        div.className = "reporte-item";
+                        div.innerHTML = `
+                            <p style="margin:0;"><strong>📍 ${lugar}</strong></p>
+                            <p style="margin:2px 0;"><strong>Magnitud:</strong> <span style="color:${mag >= 5 ? 'red' : '#e67e22'}; font-weight:bold;">M ${mag}</span> | <strong>Profundidad:</strong> ${prof} km</p>
+                            <small style="color:#27ae60; font-weight:bold;">Clic para ir y trazar ruta 🚗</small>
+                        `;
+                        div.onclick = () => window.trazarRuta(lat, lon);
+                        contenedorLista.appendChild(div);
+                    }
+                });
+            }
+
+            // Eventos Filtro
+            const btnFiltrar = document.getElementById("btn-filtrar-sismos");
+            const btnLimpiar = document.getElementById("btn-limpiar-filtro");
+
+            if (btnFiltrar) {
+                btnFiltrar.addEventListener("click", () => {
+                    const txt = (document.getElementById("filtro-lugar")?.value || "").toLowerCase();
+                    const min = parseFloat(document.getElementById("filtro-mag-min")?.value) || 0;
+                    const max = parseFloat(document.getElementById("filtro-mag-max")?.value) || 10;
+
+                    const filtrados = sismosGlobales.filter(s => {
+                        const p = (s.properties.place || "").toLowerCase();
+                        const m = s.properties.mag || 0;
+                        return (txt === "" || p.includes(txt)) && m >= min && m <= max;
+                    });
+
+                    const resumen = document.getElementById("resumen-sismos");
+                    if (resumen) resumen.textContent = `Resultados: ${filtrados.length} sismos.`;
+                    renderizar(filtrados);
+                });
+            }
+
+            if (btnLimpiar) {
+                btnLimpiar.addEventListener("click", () => {
+                    document.getElementById("filtro-lugar").value = "";
+                    document.getElementById("filtro-mag-min").value = "";
+                    document.getElementById("filtro-mag-max").value = "";
+                    const resumen = document.getElementById("resumen-sismos");
+                    if (resumen) resumen.textContent = `Mostrando ${sismosGlobales.length} sismos recientes.`;
+                    renderizar(sismosGlobales);
+                });
+            }
+        });
+    </script>
+
+    <!-- Scripts auxiliares -->
+    <script src="{% static 'recursos/scripts/tabla_csv.js' %}"></script>
+    <script src="{% static 'recursos/scripts/puntos_encuentro.js' %}"></script>
+
+</body>
+</html>

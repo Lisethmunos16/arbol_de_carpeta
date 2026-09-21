@@ -1,0 +1,6 @@
+id;nombre;latitud;longitud;altitud;tipo
+1;Punto A;2.4448;-76.6132;1750;Inicio
+2;Punto B;2.4458;-76.6120;1755;Intermedio
+3;Punto C;2.4468;-76.6110;1760;Intermedio
+4;Punto D;2.4478;-76.6100;1765;Intermedio
+5;Punto E;2.4488;-76.6090;1770;Final

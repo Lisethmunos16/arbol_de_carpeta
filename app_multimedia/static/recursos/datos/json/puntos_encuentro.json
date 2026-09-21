@@ -1,0 +1,36 @@
+{
+  "curso": "Ingeniería",
+  "semestre": 3,
+  "estudiantes": [
+    {
+      "id": 1,
+      "nombre": "Juan Pérez",
+      "edad": 20,
+      "notas": {
+        "matematicas": 4.5,
+        "fisica": 4.0,
+        "programacion": 4.8
+      }
+    },
+    {
+      "id": 2,
+      "nombre": "María López",
+      "edad": 21,
+      "notas": {
+        "matematicas": 4.2,
+        "fisica": 4.6,
+        "programacion": 4.7
+      }
+    },
+    {
+      "id": 3,
+      "nombre": "Carlos Gómez",
+      "edad": 19,
+      "notas": {
+        "matematicas": 3.8,
+        "fisica": 4.1,
+        "programacion": 4.3
+      }
+    }
+  ]
+}

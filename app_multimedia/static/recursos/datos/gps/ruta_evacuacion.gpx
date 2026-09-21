@@ -1,0 +1,60 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<gpx version="1.1"
+     creator="Ejemplo"
+     xmlns="http://www.topografix.com/GPX/1/1"
+     xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+     xsi:schemaLocation="http://www.topografix.com/GPX/1/1
+     http://www.topografix.com/GPX/1/1/gpx.xsd">
+
+  <metadata>
+    <name>Ruta de ejemplo</name>
+    <desc>Ruta GPX de prueba</desc>
+  </metadata>
+
+  <wpt lat="2.4448" lon="-76.6132">
+    <name>Punto de inicio</name>
+    <desc>Inicio de la ruta</desc>
+  </wpt>
+
+  <wpt lat="2.4458" lon="-76.6120">
+    <name>Punto 2</name>
+  </wpt>
+
+  <wpt lat="2.4468" lon="-76.6110">
+    <name>Punto 3</name>
+  </wpt>
+
+  <wpt lat="2.4478" lon="-76.6100">
+    <name>Punto 4</name>
+  </wpt>
+
+  <wpt lat="2.4488" lon="-76.6090">
+    <name>Punto final</name>
+  </wpt>
+
+  <trk>
+    <name>Ruta de ejemplo</name>
+    <trkseg>
+      <trkpt lat="2.4448" lon="-76.6132">
+        <ele>1750</ele>
+      </trkpt>
+
+      <trkpt lat="2.4458" lon="-76.6120">
+        <ele>1755</ele>
+      </trkpt>
+
+      <trkpt lat="2.4468" lon="-76.6110">
+        <ele>1760</ele>
+      </trkpt>
+
+      <trkpt lat="2.4478" lon="-76.6100">
+        <ele>1765</ele>
+      </trkpt>
+
+      <trkpt lat="2.4488" lon="-76.6090">
+        <ele>1770</ele>
+      </trkpt>
+    </trkseg>
+  </trk>
+
+</gpx>
