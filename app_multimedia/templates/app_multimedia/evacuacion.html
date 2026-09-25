@@ -16,30 +16,115 @@
     <link rel="stylesheet" href="https://unpkg.com/leaflet-routing-machine@3.2.12/dist/leaflet-routing-machine.css" />
 
     <style>
+        .tarjeta-mapa {
+            background: #ffffff;
+            border-radius: 12px;
+            padding: 20px;
+            box-shadow: 0 8px 24px rgba(0,0,0,0.08);
+            margin-bottom: 25px;
+        }
+
         #mapa {
-            height: 500px !important;
+            height: 520px !important;
             width: 100% !important;
-            border-radius: 8px;
-            margin-top: 10px;
-            background-color: #e5e3df;
+            border-radius: 12px;
+            margin-top: 15px;
+            box-shadow: inset 0 0 10px rgba(0,0,0,0.15);
             position: relative;
             z-index: 1;
         }
-        .reporte-item {
-            padding: 10px;
-            margin-bottom: 8px;
+
+        .panel-rutas {
+            display: flex;
+            gap: 12px;
+            flex-wrap: wrap;
             background: #f8f9fa;
-            border-left: 4px solid #e67e22;
-            border-radius: 4px;
+            padding: 15px;
+            border-radius: 8px;
+            border: 1px solid #e2e8f0;
+            margin-bottom: 10px;
+            align-items: flex-end;
+        }
+
+        .campo-ruta {
+            flex: 1;
+            min-width: 160px;
+        }
+
+        .campo-ruta label {
+            display: block;
+            font-size: 0.85rem;
+            font-weight: bold;
+            color: #2d3748;
+            margin-bottom: 5px;
+        }
+
+        .campo-ruta select, .campo-ruta input {
+            width: 100%;
+            padding: 9px 12px;
+            border-radius: 6px;
+            border: 1px solid #cbd5e0;
+            outline: none;
+            font-size: 0.9rem;
+        }
+
+        .btn-trazar {
+            background: linear-gradient(135deg, #0284c7, #0369a1);
+            color: white;
+            border: none;
+            padding: 10px 18px;
+            border-radius: 6px;
+            font-weight: bold;
             cursor: pointer;
-            transition: background 0.2s;
+            transition: transform 0.1s, background 0.2s;
+            box-shadow: 0 4px 12px rgba(2, 132, 199, 0.25);
         }
-        .reporte-item:hover {
-            background: #eef2f5;
+
+        .btn-trazar:hover {
+            transform: translateY(-1px);
+            background: linear-gradient(135deg, #0369a1, #075985);
         }
-        /* Ocultar marca de agua de Leaflet */
-        .leaflet-control-attribution {
+
+        /* Panel Informativo de Vuelo Aéreo */
+        .info-vuelo {
+            display: none;
+            background: #e0f2fe;
+            border-left: 5px solid #0284c7;
+            padding: 12px 15px;
+            border-radius: 6px;
+            margin-top: 10px;
+            color: #0369a1;
+            font-size: 0.95rem;
+        }
+
+        /* Ocultar marcas de agua */
+        .leaflet-control-attribution, .leaflet-routing-container-hide {
             display: none !important;
+        }
+
+        .leaflet-routing-container {
+            background-color: rgba(255, 255, 255, 0.95) !important;
+            border-radius: 10px !important;
+            padding: 12px !important;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.18) !important;
+            border: 1px solid #e2e8f0 !important;
+            max-height: 380px !important;
+        }
+
+        .reporte-item {
+            padding: 12px;
+            margin-bottom: 8px;
+            background: #ffffff;
+            border-left: 5px solid #0284c7;
+            border-radius: 6px;
+            cursor: pointer;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.04);
+            transition: all 0.2s ease;
+        }
+
+        .reporte-item:hover {
+            background: #f0f9ff;
+            transform: translateX(3px);
         }
     </style>
 </head>
@@ -76,7 +161,7 @@
             </video>
         </section>
 
-        <!-- SECCIÓN AUDIOS CORREGIDA -->
+        <!-- SECCIÓN AUDIOS -->
         <section class="tarjeta">
             <h2>🔊 Audio coderider 1</h2>
             <audio controls preload="auto">
@@ -106,10 +191,51 @@
             <a href="{% static 'recursos/datos/gps/ruta_evacuacion.gpx' %}" download>📍 GPS coderider</a>
         </section>
 
-        <!-- Sección Mapa interactivo con ruta -->
-        <section class="tarjeta">
-            <h2>🗺️ Mapa de Sismos y Navegación de Ruta</h2>
-            <p>💡 <em>Selecciona un sismo en el mapa o en la lista para trazar la ruta de navegación desde tu ubicación.</em></p>
+        <!-- Sección Mapa Interactivo con Opción Terrestre y Aérea -->
+        <section class="tarjeta-mapa">
+            <h2>🗺️ Sistema de Navegación Vial y Aérea</h2>
+            <p style="margin-bottom: 12px;">🧭 <em>Selecciona ciudades y la modalidad de viaje (Terrestre / Aérea).</em></p>
+            
+            <div class="panel-rutas">
+                <div class="campo-ruta">
+                    <label for="tipo-transporte">✈️ Modo de Viaje:</label>
+                    <select id="tipo-transporte">
+                        <option value="aereo" selected>✈️ Ruta Aérea (Vuelo)</option>
+                        <option value="terrestre">🚗 Ruta Terrestre (Vial)</option>
+                    </select>
+                </div>
+
+                <div class="campo-ruta">
+                    <label for="ciudad-origen">🚩 Origen:</label>
+                    <select id="ciudad-origen">
+                        <option value="2.4419,-76.6063" selected>Popayán, Colombia</option>
+                        <option value="3.4516,-76.5320">Cali, Colombia</option>
+                        <option value="4.7110,-74.0721">Bogotá, Colombia</option>
+                        <option value="6.2442,-75.5812">Medellín, Colombia</option>
+                        <option value="-0.1807,-78.4678">Quito, Ecuador</option>
+                    </select>
+                </div>
+
+                <div class="campo-ruta">
+                    <label for="ciudad-destino">🏁 Destino:</label>
+                    <select id="ciudad-destino">
+                        <option value="3.4516,-76.5320" selected>Cali, Colombia</option>
+                        <option value="2.4419,-76.6063">Popayán, Colombia</option>
+                        <option value="4.7110,-74.0721">Bogotá, Colombia</option>
+                        <option value="6.2442,-75.5812">Medellín, Colombia</option>
+                        <option value="-0.1807,-78.4678">Quito, Ecuador</option>
+                    </select>
+                </div>
+
+                <button id="btn-calcular-ruta" class="btn-trazar">🚀 Calcular Trayecto</button>
+            </div>
+
+            <!-- Caja Informativa para el Modo Aéreo -->
+            <div id="info-vuelo" class="info-vuelo">
+                <strong>✈️ Información del Vuelo Aéreo:</strong>
+                <span id="detalles-vuelo"></span>
+            </div>
+
             <div id="mapa"></div>
         </section>
 
@@ -200,92 +326,150 @@
         const URL_JSON = "{% static 'recursos/datos/json/puntos_encuentro.json' %}";
     </script>
 
-    <!-- Scripts de Leaflet y Routing Machine -->
+    <!-- Leaflet JS -->
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
     <script src="https://unpkg.com/leaflet-routing-machine@3.2.12/dist/leaflet-routing-machine.js"></script>
 
-    <!-- Código del Mapa y Generador de Rutas -->
+    <!-- Script de Inicialización y Lógica Aérea / Terrestre -->
     <script>
         document.addEventListener("DOMContentLoaded", () => {
             const contenedorMapa = document.getElementById("mapa");
             if (!contenedorMapa) return;
 
-            // Inicializar mapa centrado en Popayán sin control de atribución
-            window.mapa = L.map("mapa", { attributionControl: false }).setView([2.4419, -76.6063], 6);
+            // Inicialización del Mapa
+            window.mapa = L.map("mapa", { 
+                attributionControl: false,
+                zoomControl: true
+            }).setView([2.4419, -76.6063], 7);
 
-            L.tileLayer("https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png", {
+            // Capa ESRI de alta calidad (Sin marcas de agua)
+            L.tileLayer("https://server.arcgisonline.com/ArcGIS/rest/services/World_Street_Map/MapServer/tile/{z}/{y}/{x}", {
                 maxZoom: 19,
-                attribution: '© OpenStreetMap, © CartoDB'
+                attribution: ''
             }).addTo(window.mapa);
 
             setTimeout(() => { 
                 if (window.mapa) window.mapa.invalidateSize(); 
-            }, 400);
+            }, 300);
 
-            const capaSismosGroup = L.layerGroup().addTo(window.mapa);
-            let sismosGlobales = [];
-            let marcadorUsuario = null;
-            let controlRuta = null;
-            let ubicacionUsuario = [2.4419, -76.6063];
+            let controlRutaTerrestre = null;
+            let capaAereaGroup = L.layerGroup().addTo(window.mapa);
 
-            // Geolocalización del usuario
-            if (navigator.geolocation) {
-                navigator.geolocation.getCurrentPosition(
-                    (pos) => {
-                        ubicacionUsuario = [pos.coords.latitude, pos.coords.longitude];
-                        if (marcadorUsuario) window.mapa.removeLayer(marcadorUsuario);
-                        marcadorUsuario = L.marker(ubicacionUsuario)
-                            .addTo(window.mapa)
-                            .bindPopup("<b>📍 Tu Ubicación Actual</b>");
-                    },
-                    (err) => console.log("Usando ubicación prediseñada.")
-                );
+            // Función de Distancia Haversine (Línea Recta Aérea en KM)
+            function calcularDistanciaAerea(lat1, lon1, lat2, lon2) {
+                const R = 6371; // Radio de la Tierra en km
+                const dLat = (lat2 - lat1) * Math.PI / 180;
+                const dLon = (lon2 - lon1) * Math.PI / 180;
+                const a = Math.sin(dLat/2) * Math.sin(dLat/2) +
+                          Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) *
+                          Math.sin(dLon/2) * Math.sin(dLon/2);
+                const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+                return Math.round(R * c);
             }
 
-            // Función global accesible para trazar rutas
-            window.trazarRuta = function(latDestino, lonDestino) {
-                if (controlRuta) {
-                    window.mapa.removeControl(controlRuta);
+            // Generador de Curva Arc de Vuelo Aéreo
+            function crearPuntosCurva(lat1, lon1, lat2, lon2) {
+                const puntos = [];
+                const midLat = (lat1 + lat2) / 2 + (Math.abs(lon2 - lon1) * 0.15);
+                const midLon = (lon1 + lon2) / 2;
+                
+                for (let t = 0; t <= 1; t += 0.02) {
+                    const lat = (1 - t) * (1 - t) * lat1 + 2 * (1 - t) * t * midLat + t * t * lat2;
+                    const lon = (1 - t) * (1 - t) * lon1 + 2 * (1 - t) * t * midLon + t * t * lon2;
+                    puntos.push([lat, lon]);
                 }
+                return puntos;
+            }
 
-                controlRuta = L.Routing.control({
-                    waypoints: [
-                        L.latLng(ubicacionUsuario[0], ubicacionUsuario[1]),
-                        L.latLng(latDestino, lonDestino)
-                    ],
-                    routeWhileDragging: false,
-                    show: true,
-                    language: 'es',
-                    createMarker: function() { return null; } // Evita duplicar iconos
-                }).addTo(window.mapa);
+            // Función Principal para Trazar Trayectos
+            window.procesarRuta = function(modo, latOrig, lonOrig, latDest, lonDest) {
+                // Limpiar rutas previas
+                if (controlRutaTerrestre) {
+                    window.mapa.removeControl(controlRutaTerrestre);
+                    controlRutaTerrestre = null;
+                }
+                capaAereaGroup.clearLayers();
+                const cajaVuelo = document.getElementById("info-vuelo");
 
-                window.mapa.setView([latDestino, lonDestino], 8);
+                if (modo === "terrestre") {
+                    if (cajaVuelo) cajaVuelo.style.display = "none";
+
+                    controlRutaTerrestre = L.Routing.control({
+                        waypoints: [
+                            L.latLng(latOrig, lonOrig),
+                            L.latLng(latDest, lonDest)
+                        ],
+                        routeWhileDragging: false,
+                        show: true,
+                        language: 'es',
+                        lineOptions: {
+                            styles: [{ color: '#2563eb', opacity: 0.85, weight: 6 }]
+                        }
+                    }).addTo(window.mapa);
+
+                } else if (modo === "aereo") {
+                    const distKm = calcularDistanciaAerea(latOrig, lonOrig, latDest, lonDest);
+                    const tiempoMin = Math.round((distKm / 750) * 60) + 20; // 750km/h promedio + 20 min maniobras
+
+                    // Mostrar información de vuelo
+                    if (cajaVuelo) {
+                        cajaVuelo.style.display = "block";
+                        document.getElementById("detalles-vuelo").innerHTML = 
+                            ` Distancia directa: <strong>${distKm} km</strong> | Tiempo estimado de vuelo: <strong>~${tiempoMin} min</strong>`;
+                    }
+
+                    // Iconos de marcadores
+                    const iconoOrigen = L.divIcon({ html: '🛫', className: 'marcador-vuelo', iconSize: [25, 25] });
+                    const iconoDestino = L.divIcon({ html: '🛬', className: 'marcador-vuelo', iconSize: [25, 25] });
+
+                    L.marker([latOrig, lonOrig], { icon: iconoOrigen }).addTo(capaAereaGroup).bindPopup("<b>Aeropuerto Origen</b>");
+                    L.marker([latDest, lonDest], { icon: iconoDestino }).addTo(capaAereaGroup).bindPopup("<b>Aeropuerto Destino</b>");
+
+                    // Dibujar la curva punteada del vuelo
+                    const curva = crearPuntosCurva(latOrig, lonOrig, latDest, lonDest);
+                    const lineaVuelo = L.polyline(curva, {
+                        color: '#0284c7',
+                        weight: 4,
+                        dashArray: '8, 8',
+                        opacity: 0.9
+                    }).addTo(capaAereaGroup);
+
+                    window.mapa.fitBounds(lineaVuelo.getBounds(), { padding: [50, 50] });
+                }
             };
 
-            // Fetch sismos desde la API
+            // Evento Botón Trazar
+            document.getElementById("btn-calcular-ruta")?.addEventListener("click", () => {
+                const modo = document.getElementById("tipo-transporte").value;
+                const origen = document.getElementById("ciudad-origen").value.split(",");
+                const destino = document.getElementById("ciudad-destino").value.split(",");
+
+                window.procesarRuta(
+                    modo,
+                    parseFloat(origen[0]), parseFloat(origen[1]),
+                    parseFloat(destino[0]), parseFloat(destino[1])
+                );
+            });
+
+            // Trazar Ruta Aérea inicial por defecto
+            window.procesarRuta("aereo", 2.4419, -76.6063, 3.4516, -76.5320);
+
+            // Carga de Sismos
+            let sismosGlobales = [];
             fetch("https://earthquake.usgs.gov/earthquakes/feed/v1.0/summary/2.5_week.geojson")
                 .then(res => res.json())
                 .then(data => {
                     sismosGlobales = data.features || [];
                     const resumen = document.getElementById("resumen-sismos");
                     if (resumen) resumen.textContent = `Se cargaron ${sismosGlobales.length} sismos recientes.`;
-                    renderizar(sismosGlobales);
+                    renderizarSismos(sismosGlobales);
                 })
-                .catch(err => {
-                    console.error("Error sismos:", err);
-                    const resumen = document.getElementById("resumen-sismos");
-                    if (resumen) resumen.textContent = "Error al conectar con el servicio de sismos.";
-                });
+                .catch(err => console.error("Error al cargar sismos:", err));
 
-            function renderizar(lista) {
+            function renderizarSismos(lista) {
                 const contenedorLista = document.getElementById("lista-sismos");
-                if (contenedorLista) contenedorLista.innerHTML = "";
-                capaSismosGroup.clearLayers();
-
-                if (lista.length === 0) {
-                    if (contenedorLista) contenedorLista.innerHTML = "<p>No se encontraron sismos.</p>";
-                    return;
-                }
+                if (!contenedorLista) return;
+                contenedorLista.innerHTML = "";
 
                 lista.forEach((sismo) => {
                     const lugar = sismo.properties.place || "Ubicación desconocida";
@@ -294,73 +478,45 @@
                     const lat = sismo.geometry.coordinates[1];
                     const prof = sismo.geometry.coordinates[2];
 
-                    const circle = L.circleMarker([lat, lon], {
-                        radius: Math.max(mag * 3, 4),
-                        fillColor: mag >= 5 ? '#e74c3c' : '#e67e22',
-                        color: '#000',
-                        weight: 1,
-                        fillOpacity: 0.8
-                    });
-
-                    const popupHTML = `
-                        <b>📍 ${lugar}</b><br>
-                        <b>Magnitud:</b> M ${mag}<br>
-                        <b>Profundidad:</b> ${prof} km<br><br>
-                        <button onclick="window.trazarRuta(${lat}, ${lon})" style="background:#27ae60; color:white; border:none; padding:6px 10px; border-radius:4px; cursor:pointer;">
-                            🚗 Trazar Ruta de Navegación
-                        </button>
+                    const div = document.createElement("div");
+                    div.className = "reporte-item";
+                    div.innerHTML = `
+                        <p style="margin:0;"><strong>📍 ${lugar}</strong></p>
+                        <p style="margin:2px 0;"><strong>Magnitud:</strong> <span style="color:${mag >= 5 ? '#dc2626' : '#d97706'}; font-weight:bold;">M ${mag}</span> | <strong>Profundidad:</strong> ${prof} km</p>
+                        <small style="color:#0284c7; font-weight:bold;">Haz clic para trazar trayecto hacia este punto ✈️ / 🚗</small>
                     `;
-
-                    circle.bindPopup(popupHTML);
-                    capaSismosGroup.addLayer(circle);
-
-                    // Renderizar lista interactiva
-                    if (contenedorLista) {
-                        const div = document.createElement("div");
-                        div.className = "reporte-item";
-                        div.innerHTML = `
-                            <p style="margin:0;"><strong>📍 ${lugar}</strong></p>
-                            <p style="margin:2px 0;"><strong>Magnitud:</strong> <span style="color:${mag >= 5 ? 'red' : '#e67e22'}; font-weight:bold;">M ${mag}</span> | <strong>Profundidad:</strong> ${prof} km</p>
-                            <small style="color:#27ae60; font-weight:bold;">Clic para ir y trazar ruta 🚗</small>
-                        `;
-                        div.onclick = () => window.trazarRuta(lat, lon);
-                        contenedorLista.appendChild(div);
-                    }
+                    div.onclick = () => {
+                        const modo = document.getElementById("tipo-transporte").value;
+                        const origen = document.getElementById("ciudad-origen").value.split(",");
+                        window.procesarRuta(modo, parseFloat(origen[0]), parseFloat(origen[1]), lat, lon);
+                    };
+                    contenedorLista.appendChild(div);
                 });
             }
 
-            // Eventos Filtro
-            const btnFiltrar = document.getElementById("btn-filtrar-sismos");
-            const btnLimpiar = document.getElementById("btn-limpiar-filtro");
+            // Filtro de Sismos
+            document.getElementById("btn-filtrar-sismos")?.addEventListener("click", () => {
+                const txt = (document.getElementById("filtro-lugar")?.value || "").toLowerCase();
+                const min = parseFloat(document.getElementById("filtro-mag-min")?.value) || 0;
+                const max = parseFloat(document.getElementById("filtro-mag-max")?.value) || 10;
 
-            if (btnFiltrar) {
-                btnFiltrar.addEventListener("click", () => {
-                    const txt = (document.getElementById("filtro-lugar")?.value || "").toLowerCase();
-                    const min = parseFloat(document.getElementById("filtro-mag-min")?.value) || 0;
-                    const max = parseFloat(document.getElementById("filtro-mag-max")?.value) || 10;
-
-                    const filtrados = sismosGlobales.filter(s => {
-                        const p = (s.properties.place || "").toLowerCase();
-                        const m = s.properties.mag || 0;
-                        return (txt === "" || p.includes(txt)) && m >= min && m <= max;
-                    });
-
-                    const resumen = document.getElementById("resumen-sismos");
-                    if (resumen) resumen.textContent = `Resultados: ${filtrados.length} sismos.`;
-                    renderizar(filtrados);
+                const filtrados = sismosGlobales.filter(s => {
+                    const p = (s.properties.place || "").toLowerCase();
+                    const m = s.properties.mag || 0;
+                    return (txt === "" || p.includes(txt)) && m >= min && m <= max;
                 });
-            }
 
-            if (btnLimpiar) {
-                btnLimpiar.addEventListener("click", () => {
-                    document.getElementById("filtro-lugar").value = "";
-                    document.getElementById("filtro-mag-min").value = "";
-                    document.getElementById("filtro-mag-max").value = "";
-                    const resumen = document.getElementById("resumen-sismos");
-                    if (resumen) resumen.textContent = `Mostrando ${sismosGlobales.length} sismos recientes.`;
-                    renderizar(sismosGlobales);
-                });
-            }
+                document.getElementById("resumen-sismos").textContent = `Resultados: ${filtrados.length} sismos.`;
+                renderizarSismos(filtrados);
+            });
+
+            document.getElementById("btn-limpiar-filtro")?.addEventListener("click", () => {
+                document.getElementById("filtro-lugar").value = "";
+                document.getElementById("filtro-mag-min").value = "";
+                document.getElementById("filtro-mag-max").value = "";
+                document.getElementById("resumen-sismos").textContent = `Mostrando ${sismosGlobales.length} sismos recientes.`;
+                renderizarSismos(sismosGlobales);
+            });
         });
     </script>
 
